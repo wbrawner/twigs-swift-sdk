@@ -1,5 +1,5 @@
 import XCTest
-@testable import twigs
+@testable import Twigs
 
 final class twigsTests: XCTestCase {
     func testExample() throws {
