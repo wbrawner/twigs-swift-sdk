@@ -7,26 +7,26 @@
 
 import Foundation
 
-struct RecurringTransaction: Identifiable, Hashable, Codable {
-    let id: String
-    let title: String
-    let description: String?
-    let frequency: Frequency
-    let start: Date
-    let end: Date?
-    let amount: Int
-    let categoryId: String?
-    let expense: Bool
-    let createdBy: String
-    let budgetId: String
+public struct RecurringTransaction: Identifiable, Hashable, Codable {
+    public let id: String
+    public let title: String
+    public let description: String?
+    public let frequency: Frequency
+    public let start: Date
+    public let end: Date?
+    public let amount: Int
+    public let categoryId: String?
+    public let expense: Bool
+    public let createdBy: String
+    public let budgetId: String
 }
 
-struct Frequency: Hashable, Codable, CustomStringConvertible {
-    let unit: FrequencyUnit
-    let count: Int
-    let time: Time
+public struct Frequency: Hashable, Codable, CustomStringConvertible {
+    public let unit: FrequencyUnit
+    public let count: Int
+    public let time: Time
     
-    init?(unit: FrequencyUnit, count: Int, time: Time) {
+    public init?(unit: FrequencyUnit, count: Int, time: Time) {
         if count < 1 {
             return nil
         }
@@ -35,7 +35,7 @@ struct Frequency: Hashable, Codable, CustomStringConvertible {
         self.time = time
     }
     
-    init?(from string: String) {
+    public init?(from string: String) {
         let parts = string.split(separator: ";")
         guard let count = Int(parts[1]) else {
             return nil
@@ -73,18 +73,18 @@ struct Frequency: Hashable, Codable, CustomStringConvertible {
         self.count = count
     }
     
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let frequencyString = try container.decode(String.self)
         self.init(from: frequencyString)!
     }
     
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(description)
     }
     
-    var description: String {
+    public var description: String {
         // TODO: Make the backend representation of this more sensible and then use this
         // return [unit.description, count.description, time.description].joined(separator: ";")
         let unitParts = "\(unit)".split(separator: ";")
@@ -94,19 +94,19 @@ struct Frequency: Hashable, Codable, CustomStringConvertible {
             return [unitParts[0].description, count.description, unitParts[1].description, time.description].joined(separator: ";")
         }
     }
-
-    var naturalDescription: String {
+    
+    public var naturalDescription: String {
         return unit.format(count: count, time: time)
     }
 }
 
-enum FrequencyUnit: Hashable, CustomStringConvertible {
+public enum FrequencyUnit: Hashable, CustomStringConvertible {
     case daily
     case weekly(Set<DayOfWeek>)
     case monthly(DayOfMonth)
     case yearly(DayOfYear)
     
-    var description: String {
+    public var description: String {
         switch self {
         case .daily:
             return "D"
@@ -133,12 +133,12 @@ enum FrequencyUnit: Hashable, CustomStringConvertible {
     }
 }
 
-struct Time: Hashable, CustomStringConvertible {
-    let hours: Int
-    let minutes: Int
-    let seconds: Int
+public struct Time: Hashable, CustomStringConvertible {
+    public let hours: Int
+    public let minutes: Int
+    public let seconds: Int
     
-    init?(hours: Int, minutes: Int, seconds: Int) {
+    public init?(hours: Int, minutes: Int, seconds: Int) {
         if hours < 0 || hours > 23 {
             return nil
         }
@@ -153,7 +153,7 @@ struct Time: Hashable, CustomStringConvertible {
         self.seconds = seconds
     }
     
-    init?(from string: String) {
+    public init?(from string: String) {
         let parts = string.split(separator: ":").compactMap {
             Int($0)
         }
@@ -163,29 +163,29 @@ struct Time: Hashable, CustomStringConvertible {
         self.init(hours: parts[0], minutes: parts[1], seconds: parts[2])
     }
     
-    var description: String {
+    public var description: String {
         return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
     }
 }
 
-enum DayOfMonth: Hashable, CustomStringConvertible {
+public enum DayOfMonth: Hashable, CustomStringConvertible {
     case positional(Position, DayOfWeek)
     case fixed(Int)
-    init?(position: Position, dayOfWeek: DayOfWeek) {
+    public init?(position: Position, dayOfWeek: DayOfWeek) {
         if position == .day {
             return nil
         }
         self = .positional(position, dayOfWeek)
     }
     
-    init?(day: Int) {
+    public init?(day: Int) {
         if day < 1 || day > 31 {
             return nil
         }
         self = .fixed(day)
     }
     
-    init?(from string: String) {
+    public init?(from string: String) {
         let parts = string.split(separator: "-")
         guard let position = Position.init(rawValue: String(parts[0])) else {
             return nil
@@ -203,7 +203,7 @@ enum DayOfMonth: Hashable, CustomStringConvertible {
         }
     }
     
-    var description: String {
+    public var description: String {
         switch self {
         case .positional(let position, let dayOfWeek):
             return "\(position)-\(dayOfWeek)"
@@ -213,7 +213,7 @@ enum DayOfMonth: Hashable, CustomStringConvertible {
     }
 }
 
-enum Position: String, Hashable {
+public enum Position: String, Hashable {
     case day = "DAY"
     case first = "FIRST"
     case second = "SECOND"
@@ -222,7 +222,7 @@ enum Position: String, Hashable {
     case last = "LAST"
 }
 
-enum DayOfWeek: String, Hashable {
+public enum DayOfWeek: String, Hashable {
     case monday = "MONDAY"
     case tuesday = "TUESDAY"
     case wednesday = "WEDNESDAY"
@@ -232,11 +232,11 @@ enum DayOfWeek: String, Hashable {
     case sunday = "SUNDAY"
 }
 
-struct DayOfYear: Hashable, CustomStringConvertible {
-    let month: Int
-    let day: Int
+public struct DayOfYear: Hashable, CustomStringConvertible {
+    public let month: Int
+    public let day: Int
     
-    init?(month: Int, day: Int) {
+    public init?(month: Int, day: Int) {
         var maxDay: Int
         switch month {
         case 2:
@@ -258,7 +258,7 @@ struct DayOfYear: Hashable, CustomStringConvertible {
         self.month = month
     }
     
-    init?(from string: String) {
+    public init?(from string: String) {
         let parts = string.split(separator: "-").compactMap {
             Int($0)
         }
@@ -268,12 +268,12 @@ struct DayOfYear: Hashable, CustomStringConvertible {
         self.init(month: parts[0], day: parts[1])
     }
     
-    var description: String {
+    public var description: String {
         return String(format: "%02d-%02d", self.month, self.day)
     }
 }
 
-protocol RecurringTransactionsRepository {
+public protocol RecurringTransactionsRepository {
     func getRecurringTransactions(budgetId: String) async throws -> [RecurringTransaction]
     func getRecurringTransaction(_ id: String) async throws -> RecurringTransaction
     func createRecurringTransaction(_ transaction: RecurringTransaction) async throws -> RecurringTransaction

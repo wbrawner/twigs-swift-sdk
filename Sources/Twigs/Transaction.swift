@@ -7,31 +7,31 @@
 
 import Foundation
 
-struct Transaction: Identifiable, Hashable, Codable {
-    let id: String
-    let title: String
-    let description: String?
-    let date: Date
-    let amount: Int
-    let categoryId: String?
-    let expense: Bool
-    let createdBy: String
-    let budgetId: String
+public struct Transaction: Identifiable, Hashable, Codable {
+    public let id: String
+    public let title: String
+    public let description: String?
+    public let date: Date
+    public let amount: Int
+    public let categoryId: String?
+    public let expense: Bool
+    public let createdBy: String
+    public let budgetId: String
 }
 
-struct BalanceResponse: Codable {
-    let balance: Int
+public struct BalanceResponse: Codable {
+    public let balance: Int
 }
 
-enum TransactionType: Int, CaseIterable, Identifiable, Hashable {
+public enum TransactionType: Int, CaseIterable, Identifiable, Hashable {
     case expense
     case income
     
-    var id: TransactionType { self }
+    public var id: TransactionType { self }
 }
 
 extension Transaction {
-    var type: TransactionType {
+    public var type: TransactionType {
         if (self.expense) {
             return .expense
         } else {
@@ -39,12 +39,12 @@ extension Transaction {
         }
     }
     
-    var amountString: String {
+    public var amountString: String {
         return String(Double(self.amount) / 100.0)
     }
 }
 
-protocol TransactionRepository {
+public protocol TransactionRepository {
     func getTransactions(budgetIds: [String], categoryIds: [String]?, from: Date?, to: Date?, count: Int?, page: Int?) async throws -> [Transaction]
     func getTransaction(_ transactionId: String) async throws -> Transaction
     func createTransaction(_ transaction: Transaction) async throws -> Transaction

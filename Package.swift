@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "twigs",
+    name: "Twigs",
     platforms: [
         .macOS(.v12),
         .iOS(.v15)
@@ -26,7 +26,7 @@ let package = Package(
             name: "Twigs",
             dependencies: []),
         .testTarget(
-            name: "twigsTests",
+            name: "TwigsTests",
             dependencies: ["Twigs"]),
     ]
 )

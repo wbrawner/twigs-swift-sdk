@@ -7,10 +7,10 @@
 
 import Foundation
 
-class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTransactionsRepository, TransactionRepository, UserRepository {
+public class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTransactionsRepository, TransactionRepository, UserRepository {
     let requestHelper: RequestHelper
     
-    convenience init(_ serverUrl: String) {
+    public convenience init(_ serverUrl: String) {
         self.init(RequestHelper(serverUrl))
     }
     
@@ -18,7 +18,7 @@ class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTransactio
         self.requestHelper = requestHelper
     }
     
-    var token: String? {
+    public var token: String? {
         get {
             return requestHelper.token
         }
@@ -28,7 +28,7 @@ class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTransactio
     }
         
     // MARK: Budgets
-    func getBudgets(count: Int? = nil, page: Int? = nil) async throws -> [Budget] {
+    public func getBudgets(count: Int? = nil, page: Int? = nil) async throws -> [Budget] {
         var queries = [String: Array<String>]()
         if count != nil {
             queries["count"] = [String(count!)]
@@ -39,25 +39,25 @@ class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTransactio
         return try await requestHelper.get("/api/budgets", queries: queries)
     }
     
-    func getBudget(_ id: String) async throws -> Budget {
+    public func getBudget(_ id: String) async throws -> Budget {
         return try await requestHelper.get("/api/budgets/\(id)")
     }
     
-    func newBudget(_ budget: Budget) async throws -> Budget {
+    public func newBudget(_ budget: Budget) async throws -> Budget {
         return try await requestHelper.post("/api/budgets", data: budget, type: Budget.self)
     }
     
-    func updateBudget(_ budget: Budget) async throws -> Budget {
+    public func updateBudget(_ budget: Budget) async throws -> Budget {
         return try await requestHelper.put("/api/budgets/\(budget.id)", data: budget)
     }
     
-    func deleteBudget(_ id: String) async throws  {
+    public func deleteBudget(_ id: String) async throws  {
         return try await requestHelper.delete("/api/budgets/\(id)")
     }
     
     // MARK: Transactions
     
-  func getTransactions(
+    public func getTransactions(
         budgetIds: [String],
         categoryIds: [String]? = nil,
         from: Date? = nil,
@@ -85,23 +85,23 @@ class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTransactio
         return try await requestHelper.get("/api/transactions", queries: queries)
     }
     
-    func getTransaction(_ id: String) async throws -> Transaction {
+    public func getTransaction(_ id: String) async throws -> Transaction {
         return try await requestHelper.get("/api/transactions/\(id)")
     }
     
-    func createTransaction(_ transaction: Transaction) async throws -> Transaction {
+    public func createTransaction(_ transaction: Transaction) async throws -> Transaction {
         return try await requestHelper.post("/api/transactions", data: transaction, type: Transaction.self)
     }
     
-    func updateTransaction(_ transaction: Transaction) async throws -> Transaction {
+    public func updateTransaction(_ transaction: Transaction) async throws -> Transaction {
         return try await requestHelper.put("/api/transactions/\(transaction.id)", data: transaction)
     }
     
-    func deleteTransaction(_ id: String) async throws  {
+    public func deleteTransaction(_ id: String) async throws  {
         return try await requestHelper.delete("/api/transactions/\(id)")
     }
     
-    func sumTransactions(budgetId: String? = nil, categoryId: String? = nil, from: Date? = nil, to: Date? = nil) async throws -> BalanceResponse {
+    public func sumTransactions(budgetId: String? = nil, categoryId: String? = nil, from: Date? = nil, to: Date? = nil) async throws -> BalanceResponse {
         var queries = [String: Array<String>]()
         if let budgetId = budgetId {
             queries["budgetId"] = [budgetId]
@@ -119,8 +119,7 @@ class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTransactio
     }
     
     // MARK: Categories
-    
-    func getCategories(budgetId: String? = nil, expense: Bool? = nil, archived: Bool? = nil, count: Int? = nil, page: Int? = nil) async throws -> [Category] {
+    public func getCategories(budgetId: String? = nil, expense: Bool? = nil, archived: Bool? = nil, count: Int? = nil, page: Int? = nil) async throws -> [Category] {
         var queries = [String: Array<String>]()
         if budgetId != nil {
             queries["budgetIds"] = [String(budgetId!)]
@@ -140,28 +139,28 @@ class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTransactio
         return try await requestHelper.get("/api/categories", queries: queries)
     }
     
-    func getCategory(_ id: String) async throws -> Category {
+    public func getCategory(_ id: String) async throws -> Category {
         return try await requestHelper.get("/api/categories/\(id)")
     }
     
-    func getCategoryBalance(_ id: String) async throws -> Int {
+    public func getCategoryBalance(_ id: String) async throws -> Int {
         return try await requestHelper.get("/api/categories/\(id)/balance")
     }
     
-    func createCategory(_ category: Category) async throws -> Category {
+    public func createCategory(_ category: Category) async throws -> Category {
         return try await requestHelper.post("/api/categories", data: category, type: Category.self)
     }
     
-    func updateCategory(_ category: Category) async throws -> Category {
+    public func updateCategory(_ category: Category) async throws -> Category {
         return try await requestHelper.put("/api/categories/\(category.id)", data: category)
     }
     
-    func deleteCategory(_ id: String) async throws  {
+    public func deleteCategory(_ id: String) async throws  {
         return try await requestHelper.delete("/api/categories/\(id)")
     }
     
     // MARK: Users
-    func login(username: String, password: String) async throws -> LoginResponse {
+    public func login(username: String, password: String) async throws -> LoginResponse {
         let response = try await requestHelper.post(
             "/api/users/login",
             data: LoginRequest(username: username, password: password),
@@ -171,7 +170,7 @@ class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTransactio
         return response
     }
     
-    func register(username: String, email: String, password: String) async throws -> User {
+    public func register(username: String, email: String, password: String) async throws -> User {
         return try await requestHelper.post(
             "/api/users/register",
             data: RegistrationRequest(username: username, email: email, password: password),
@@ -179,18 +178,18 @@ class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTransactio
         )
     }
     
-    func getUser(_ id: String) async throws -> User {
+    public func getUser(_ id: String) async throws -> User {
         return try await requestHelper.get("/api/users/\(id)")
     }
     
-    func searchUsers(_ query: String) async throws -> [User] {
+    public func searchUsers(_ query: String) async throws -> [User] {
         return try await requestHelper.get(
             "/api/users/search",
             queries: ["query": [query]]
         )
     }
     
-    func getUsers(count: Int? = nil, page: Int? = nil) async throws -> [User] {
+    public func getUsers(count: Int? = nil, page: Int? = nil) async throws -> [User] {
         var queries = [String: Array<String>]()
         if count != nil {
             queries["count"] = [String(count!)]
@@ -201,36 +200,36 @@ class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTransactio
         return try await requestHelper.get("/api/Users", queries: queries)
     }
     
-    func newUser(_ user: User) async throws -> User {
+    public func newUser(_ user: User) async throws -> User {
         return try await requestHelper.post("/api/users", data: user, type: User.self)
     }
     
-    func updateUser(_ user: User) async throws -> User {
+    public func updateUser(_ user: User) async throws -> User {
         return try await requestHelper.put("/api/users/\(user.id)", data: user)
     }
     
-    func deleteUser(_ user: User) async throws  {
+    public func deleteUser(_ user: User) async throws  {
         return try await requestHelper.delete("/api/users/\(user.id)")
     }
     
     // MARK: Recurring Transactions
-    func getRecurringTransactions(budgetId: String) async throws -> [RecurringTransaction] {
+    public func getRecurringTransactions(budgetId: String) async throws -> [RecurringTransaction] {
         return try await requestHelper.get("/api/recurringtransactions", queries: ["budgetId": [budgetId]])
     }
     
-    func getRecurringTransaction(_ id: String) async throws -> RecurringTransaction {
+    public func getRecurringTransaction(_ id: String) async throws -> RecurringTransaction {
         return try await requestHelper.get("/api/recurringtransactions/\(id)")
     }
     
-    func createRecurringTransaction(_ transaction: RecurringTransaction) async throws -> RecurringTransaction {
+    public func createRecurringTransaction(_ transaction: RecurringTransaction) async throws -> RecurringTransaction {
         return try await requestHelper.post("/api/recurringtransactions", data: transaction, type: RecurringTransaction.self)
     }
     
-    func updateRecurringTransaction(_ transaction: RecurringTransaction) async throws -> RecurringTransaction {
+    public func updateRecurringTransaction(_ transaction: RecurringTransaction) async throws -> RecurringTransaction {
         return try await requestHelper.put("/api/recurringtransactions/\(transaction.id)", data: transaction)
     }
     
-    func deleteRecurringTransaction(_ id: String) async throws {
+    public func deleteRecurringTransaction(_ id: String) async throws {
         return try await requestHelper.delete("/api/recurringtransactions/\(id)")
     }
 }
