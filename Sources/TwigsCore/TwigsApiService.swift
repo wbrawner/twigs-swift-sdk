@@ -26,7 +26,7 @@ public class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTra
             requestHelper.token = newValue
         }
     }
-        
+    
     // MARK: Budgets
     public func getBudgets(count: Int? = nil, page: Int? = nil) async throws -> [Budget] {
         var queries = [String: Array<String>]()
@@ -350,8 +350,8 @@ class RequestHelper {
     }
 }
 
-enum NetworkError: Error, Equatable {
-    static func == (lhs: NetworkError, rhs: NetworkError) -> Bool {
+public enum NetworkError: Error, Equatable {
+    public static func == (lhs: NetworkError, rhs: NetworkError) -> Bool {
         switch (lhs, rhs) {
         case (.unknown, .unknown):
             return true
@@ -370,7 +370,7 @@ enum NetworkError: Error, Equatable {
         }
     }
     
-    var name: String {
+    public var name: String {
         get {
             switch self {
             case .unknown:
@@ -424,18 +424,8 @@ extension Date {
         return dateFormatter
     }()
     
-    static var firstOfMonth: Date {
-        get {
-            return Calendar.current.dateComponents([.calendar, .year,.month], from: Date()).date!
-        }
-    }
-    
     func toISO8601String() -> String {
         return Date.iso8601DateFormatter.string(from: self)
-    }
-    
-    func toLocaleString() -> String {
-        return Date.localeDateFormatter.string(from: self)
     }
 }
 
