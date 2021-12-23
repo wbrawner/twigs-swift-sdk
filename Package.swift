@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "Twigs",
+    name: "twigs",
     platforms: [
         .macOS(.v12),
         .iOS(.v15)
