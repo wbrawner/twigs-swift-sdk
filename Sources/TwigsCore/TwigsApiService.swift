@@ -7,15 +7,24 @@
 
 import Foundation
 
-public class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTransactionsRepository, TransactionRepository, UserRepository {
+open class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTransactionsRepository, TransactionRepository, UserRepository {
     let requestHelper: RequestHelper
     
-    public convenience init(_ serverUrl: String) {
-        self.init(RequestHelper(serverUrl))
+    public convenience init() {
+        self.init(RequestHelper())
     }
     
     init(_ requestHelper: RequestHelper) {
         self.requestHelper = requestHelper
+    }
+    
+    public var baseUrl: String? {
+        get {
+            return requestHelper.baseUrl
+        }
+        set {
+            requestHelper.baseUrl = newValue
+        }
     }
     
     public var token: String? {
@@ -236,13 +245,15 @@ public class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTra
 
 class RequestHelper {
     let decoder = JSONDecoder()
-    private var _baseUrl: String = ""
-    var baseUrl: String {
+    private var _baseUrl: String? = nil
+    var baseUrl: String? {
         get {
             self.baseUrl
         }
         set {
-            var correctServer = newValue.lowercased()
+            guard var correctServer = newValue?.lowercased() else {
+                return
+            }
             if !correctServer.starts(with: "http://") && !correctServer.starts(with: "https://") {
                 correctServer = "http://\(correctServer)"
             }
@@ -251,8 +262,7 @@ class RequestHelper {
     }
     var token: String?
     
-    init(_ serverUrl: String) {
-        self.baseUrl = serverUrl
+    init() {
         self.decoder.dateDecodingStrategy = .formatted(Date.iso8601DateFormatter)
     }
     
@@ -414,13 +424,6 @@ extension Date {
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
         dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
         dateFormatter.timeZone = TimeZone(identifier: "UTC")
-        return dateFormatter
-    }()
-    
-    static let localeDateFormatter: DateFormatter = {
-        let dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale.current
-        dateFormatter.dateFormat = DateFormatter.dateFormat(fromTemplate: "yyyyMMdd", options: 0, locale: Locale.current)
         return dateFormatter
     }()
     
