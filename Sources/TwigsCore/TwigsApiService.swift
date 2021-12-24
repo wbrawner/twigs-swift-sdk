@@ -307,7 +307,10 @@ class RequestHelper {
     
     func delete(_ endPoint: String) async throws {
         // Delete requests return no body so they need a special request helper
-        guard let url = URL(string: self.baseUrl + endPoint) else {
+        guard let baseUrl = self.baseUrl else {
+            throw NetworkError.invalidUrl
+        }
+        guard let url = URL(string: baseUrl + endPoint) else {
             throw NetworkError.invalidUrl
         }
         
@@ -331,8 +334,10 @@ class RequestHelper {
         method: String,
         data: Encodable? = nil
     ) async throws -> ResultType {
-        guard let url = URL(string: self.baseUrl + endPoint) else {
-            print("Unable to build url from base: \(self.baseUrl)")
+        guard let baseUrl = self.baseUrl else {
+            throw NetworkError.invalidUrl
+        }
+        guard let url = URL(string: baseUrl + endPoint) else {
             throw NetworkError.invalidUrl
         }
         
