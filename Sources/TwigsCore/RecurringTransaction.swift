@@ -13,12 +13,52 @@ public struct RecurringTransaction: Identifiable, Hashable, Codable {
     public let description: String?
     public let frequency: Frequency
     public let start: Date
-    public let end: Date?
+    public let finish: Date?
     public let amount: Int
     public let categoryId: String?
     public let expense: Bool
     public let createdBy: String
     public let budgetId: String
+    
+    public init(
+        id: String = "",
+        title: String = "",
+        description: String? = nil,
+        frequency: Frequency = Frequency(unit: FrequencyUnit.daily, count: 1, time: Time(hours: 9, minutes: 0, seconds: 0)!)!,
+        start: Date = Date(),
+        finish: Date? = nil,
+        amount: Int = 0,
+        categoryId: String? = nil,
+        expense: Bool = true,
+        createdBy: String,
+        budgetId: String
+    ) {
+        self.id = id
+        self.title = title
+        self.description = description
+        self.frequency = frequency
+        self.start = start
+        self.finish = finish
+        self.amount = amount
+        self.categoryId = categoryId
+        self.expense = expense
+        self.createdBy = createdBy
+        self.budgetId = budgetId
+    }
+}
+
+extension RecurringTransaction {
+    public var type: TransactionType {
+        if (self.expense) {
+            return .expense
+        } else {
+            return .income
+        }
+    }
+    
+    public var amountString: String {
+        return self.amount > 0 ? String(format: "%.02f", Double(self.amount) / 100.0) : ""
+    }
 }
 
 public struct Frequency: Hashable, Codable, CustomStringConvertible {
@@ -100,7 +140,18 @@ public struct Frequency: Hashable, Codable, CustomStringConvertible {
     }
 }
 
-public enum FrequencyUnit: Hashable, CustomStringConvertible {
+public enum FrequencyUnit: Identifiable, Hashable, CustomStringConvertible, CaseIterable {
+    public var id: String {
+        return self.baseName
+    }
+    
+    public static var allCases: [FrequencyUnit] = [
+        .daily,
+        .weekly(Set()),
+        .monthly(.fixed(1)),
+        .yearly(DayOfYear(month: 1, day: 1)!),
+    ]
+    
     case daily
     case weekly(Set<DayOfWeek>)
     case monthly(DayOfMonth)
@@ -111,11 +162,11 @@ public enum FrequencyUnit: Hashable, CustomStringConvertible {
         case .daily:
             return "D"
         case .weekly(let daysOfWeek):
-            return String(format: "W;%s", daysOfWeek.map { $0.rawValue }.joined(separator: ","))
+            return "W;\(daysOfWeek.map { $0.rawValue }.joined(separator: ","))"
         case .monthly(let dayOfMonth):
-            return String(format: "M;%s", dayOfMonth.description)
+            return "M;\(dayOfMonth.description)"
         case .yearly(let dayOfYear):
-            return String(format: "Y;%s", dayOfYear.description)
+            return "Y;\(dayOfYear.description)"
         }
     }
     
@@ -129,6 +180,19 @@ public enum FrequencyUnit: Hashable, CustomStringConvertible {
             return String(localized: "Every \(count) month(s) on the \(dayOfMonth.description) at \(time.description)")
         case .yearly(let dayOfYear):
             return String(localized: "Every \(count) year(s) on \(dayOfYear.description) at \(time.description)")
+        }
+    }
+    
+    public var baseName: String {
+        switch self {
+        case .daily:
+            return "day"
+        case .weekly(_):
+            return "week"
+        case .monthly(_):
+            return "month"
+        case .yearly(_):
+            return "year"
         }
     }
 }
@@ -169,13 +233,13 @@ public struct Time: Hashable, CustomStringConvertible {
 }
 
 public enum DayOfMonth: Hashable, CustomStringConvertible {
-    case positional(Position, DayOfWeek)
+    case ordinal(Ordinal, DayOfWeek)
     case fixed(Int)
-    public init?(position: Position, dayOfWeek: DayOfWeek) {
-        if position == .day {
+    public init?(ordinal: Ordinal, dayOfWeek: DayOfWeek) {
+        if ordinal == .day {
             return nil
         }
-        self = .positional(position, dayOfWeek)
+        self = .ordinal(ordinal, dayOfWeek)
     }
     
     public init?(day: Int) {
@@ -187,7 +251,7 @@ public enum DayOfMonth: Hashable, CustomStringConvertible {
     
     public init?(from string: String) {
         let parts = string.split(separator: "-")
-        guard let position = Position.init(rawValue: String(parts[0])) else {
+        guard let position = Ordinal.init(rawValue: String(parts[0])) else {
             return nil
         }
         if position == .day {
@@ -199,21 +263,21 @@ public enum DayOfMonth: Hashable, CustomStringConvertible {
             guard let dayOfWeek = DayOfWeek(rawValue: String(parts[1])) else {
                 return nil
             }
-            self = .positional(position, dayOfWeek)
+            self = .ordinal(position, dayOfWeek)
         }
     }
     
     public var description: String {
         switch self {
-        case .positional(let position, let dayOfWeek):
-            return "\(position)-\(dayOfWeek)"
+        case .ordinal(let position, let dayOfWeek):
+            return "\(position.rawValue)-\(dayOfWeek)"
         case .fixed(let day):
-            return "\(Position.day)-\(day)"
+            return "\(Ordinal.day.rawValue)-\(day)"
         }
     }
 }
 
-public enum Position: String, Hashable {
+public enum Ordinal: String, Hashable, CaseIterable {
     case day = "DAY"
     case first = "FIRST"
     case second = "SECOND"
@@ -222,14 +286,18 @@ public enum Position: String, Hashable {
     case last = "LAST"
 }
 
-public enum DayOfWeek: String, Hashable {
+public enum DayOfWeek: String, Hashable, CaseIterable, Identifiable {
+    public var id: String {
+        return self.rawValue
+    }
+    
+    case sunday = "SUNDAY"
     case monday = "MONDAY"
     case tuesday = "TUESDAY"
     case wednesday = "WEDNESDAY"
     case thursday = "THURSDAY"
     case friday = "FRIDAY"
     case saturday = "SATURDAY"
-    case sunday = "SUNDAY"
 }
 
 public struct DayOfYear: Hashable, CustomStringConvertible {
@@ -237,17 +305,7 @@ public struct DayOfYear: Hashable, CustomStringConvertible {
     public let day: Int
     
     public init?(month: Int, day: Int) {
-        var maxDay: Int
-        switch month {
-        case 2:
-            maxDay = 29;
-            break;
-        case 4, 6, 9, 11:
-            maxDay = 30;
-            break;
-        default:
-            maxDay = 31;
-        }
+        let maxDay = DayOfYear.maxDays(inMonth: month)
         if day < 1 || day > maxDay {
             return nil
         }
@@ -271,10 +329,21 @@ public struct DayOfYear: Hashable, CustomStringConvertible {
     public var description: String {
         return String(format: "%02d-%02d", self.month, self.day)
     }
+    
+    public static func maxDays(inMonth month: Int) -> Int {
+        switch month {
+        case 2:
+            return 29;
+        case 4, 6, 9, 11:
+            return 30;
+        default:
+            return 31;
+        }
+    }
 }
 
 public protocol RecurringTransactionsRepository {
-    func getRecurringTransactions(budgetId: String) async throws -> [RecurringTransaction]
+    func getRecurringTransactions(_ budgetId: String) async throws -> [RecurringTransaction]
     func getRecurringTransaction(_ id: String) async throws -> RecurringTransaction
     func createRecurringTransaction(_ transaction: RecurringTransaction) async throws -> RecurringTransaction
     func updateRecurringTransaction(_ transaction: RecurringTransaction) async throws -> RecurringTransaction

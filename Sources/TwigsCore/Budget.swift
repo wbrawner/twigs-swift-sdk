@@ -5,15 +5,31 @@ public struct Budget: Identifiable, Hashable, Codable {
     public let name: String
     public let description: String?
     public let currencyCode: String?
+
+    public init(id: String, name: String, description: String?, currencyCode: String?) {
+        self.id = id
+        self.name = name
+        self.description = description
+        self.currencyCode = currencyCode
+    }
 }
 
-public struct BudgetOverview {
+public struct BudgetOverview: Equatable {
     public let budget: Budget
     public let balance: Int
-    public var expectedIncome: Int = 0
-    public var actualIncome: Int = 0
-    public var expectedExpenses: Int = 0
-    public var actualExpenses: Int = 0
+    public var expectedIncome: Int
+    public var actualIncome: Int
+    public var expectedExpenses: Int
+    public var actualExpenses: Int
+    
+    public init(budget: Budget, balance: Int, expectedIncome: Int = 0, actualIncome: Int = 0, expectedExpenses: Int = 0, actualExpenses: Int = 0) {
+        self.budget = budget
+        self.balance = balance
+        self.expectedIncome = expectedIncome
+        self.actualIncome = actualIncome
+        self.expectedExpenses = expectedExpenses
+        self.actualExpenses = actualExpenses
+    }
 }
 
 public protocol BudgetRepository {

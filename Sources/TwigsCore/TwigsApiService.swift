@@ -14,7 +14,7 @@ open class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTrans
         self.init(RequestHelper())
     }
     
-    init(_ requestHelper: RequestHelper) {
+    public init(_ requestHelper: RequestHelper) {
         self.requestHelper = requestHelper
     }
     
@@ -221,7 +221,7 @@ open class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTrans
     }
     
     // MARK: Recurring Transactions
-    open func getRecurringTransactions(budgetId: String) async throws -> [RecurringTransaction] {
+    open func getRecurringTransactions(_ budgetId: String) async throws -> [RecurringTransaction] {
         return try await requestHelper.get("/api/recurringtransactions", queries: ["budgetId": [budgetId]])
     }
     
@@ -242,26 +242,26 @@ open class TwigsApiService: BudgetRepository, CategoryRepository, RecurringTrans
     }
 }
 
-class RequestHelper {
+public class RequestHelper {
     let decoder = JSONDecoder()
     private var _baseUrl: String? = nil
     var baseUrl: String? {
         get {
-            self.baseUrl
+            self._baseUrl
         }
         set {
             guard var correctServer = newValue?.lowercased() else {
                 return
             }
             if !correctServer.starts(with: "http://") && !correctServer.starts(with: "https://") {
-                correctServer = "http://\(correctServer)"
+                correctServer = "https://\(correctServer)"
             }
             self._baseUrl = correctServer
         }
     }
     var token: String?
     
-    init() {
+    public init() {
         self.decoder.dateDecodingStrategy = .formatted(Date.iso8601DateFormatter)
     }
     
@@ -317,11 +317,14 @@ class RequestHelper {
         var request = URLRequest(url: url)
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpMethod = "DELETE"
+        if let token = self.token {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         
         let (_, res) = try await URLSession.shared.data(for: request)
         guard let response = res as? HTTPURLResponse, 200...299 ~= response.statusCode else {
             switch (res as? HTTPURLResponse)?.statusCode {
-            case 400: throw NetworkError.badRequest
+            case 400: throw NetworkError.badRequest(nil)
             case 401, 403: throw NetworkError.unauthorized
             case 404: throw NetworkError.notFound
             default: throw NetworkError.unknown
@@ -351,16 +354,46 @@ class RequestHelper {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         
-        let (data, res) = try await URLSession.shared.data(for: request)
-        guard let response = res as? HTTPURLResponse, 200...299 ~= response.statusCode else {
-            switch (res as? HTTPURLResponse)?.statusCode {
-            case 400: throw NetworkError.badRequest
+        var data: Data? = nil
+        var res: URLResponse?
+        do {
+            (data, res) = try await URLSession.shared.data(for: request)
+            guard let response = res as? HTTPURLResponse, 200...299 ~= response.statusCode else {
+                switch (res as? HTTPURLResponse)?.statusCode ?? -1 {
+                case 400:
+                    var reason: String? = nil
+                    if let data = data {
+                        reason = String(decoding: data, as: UTF8.self)
+                    }
+                    throw NetworkError.badRequest(reason)
+                case 401, 403: throw NetworkError.unauthorized
+                case 404: throw NetworkError.notFound
+                case 500...599: throw NetworkError.server
+                default: throw NetworkError.unknown
+                }
+            }
+        } catch {
+            switch (res as? HTTPURLResponse)?.statusCode ?? -1 {
             case 401, 403: throw NetworkError.unauthorized
             case 404: throw NetworkError.notFound
-            default: throw NetworkError.unknown
+            case 500...599: throw NetworkError.server
+            default:
+                var reason: String = error.localizedDescription
+                if let data = data {
+                    reason = String(decoding: data, as: UTF8.self)
+                }
+                throw NetworkError.badRequest(reason)
             }
         }
-        return try self.decoder.decode(ResultType.self, from: data)
+        do {
+            guard let data = data else {
+                throw NetworkError.unknown
+            }
+            return try self.decoder.decode(ResultType.self, from: data)
+        } catch {
+            print("error decoding json: \(error)")
+            throw NetworkError.jsonParsingFailed(error)
+        }
     }
 }
 
@@ -373,9 +406,11 @@ public enum NetworkError: Error, Equatable {
             return true
         case (.unauthorized, .unauthorized):
             return true
-        case (.badRequest, .badRequest):
-            return true
+        case (let .badRequest(reason1), let .badRequest(reason2)):
+            return reason1 == reason2
         case (.invalidUrl, .invalidUrl):
+            return true
+        case (.server, .server):
             return true
         case (let .jsonParsingFailed(error1), let .jsonParsingFailed(error2)):
             return error1.localizedDescription == error2.localizedDescription
@@ -395,10 +430,12 @@ public enum NetworkError: Error, Equatable {
                 return "deleted"
             case .unauthorized:
                 return "unauthorized"
-            case .badRequest:
+            case .badRequest(_):
                 return "badRequest"
             case .invalidUrl:
                 return "invalidUrl"
+            case .server:
+                return "server"
             case .jsonParsingFailed(_):
                 return "jsonParsingFailed"
             }
@@ -409,8 +446,9 @@ public enum NetworkError: Error, Equatable {
     case notFound
     case deleted
     case unauthorized
-    case badRequest
+    case badRequest(String?)
     case invalidUrl
+    case server
     case jsonParsingFailed(Error)
 }
 

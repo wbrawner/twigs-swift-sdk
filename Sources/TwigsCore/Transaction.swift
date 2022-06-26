@@ -17,10 +17,26 @@ public struct Transaction: Identifiable, Hashable, Codable {
     public let expense: Bool
     public let createdBy: String
     public let budgetId: String
+    
+    public init(id: String = "", title: String = "", description: String? = "", date: Date = Date(), amount: Int = 0, categoryId: String? = "", expense: Bool = true, createdBy: String, budgetId: String) {
+        self.id = id
+        self.title = title
+        self.description = description
+        self.date = date
+        self.amount = amount
+        self.categoryId = categoryId
+        self.expense = expense
+        self.createdBy = createdBy
+        self.budgetId = budgetId
+    }
 }
 
 public struct BalanceResponse: Codable {
     public let balance: Int
+
+    public init(balance: Int) {
+        self.balance = balance
+    }
 }
 
 public enum TransactionType: Int, CaseIterable, Identifiable, Hashable {
@@ -40,7 +56,7 @@ extension Transaction {
     }
     
     public var amountString: String {
-        return String(Double(self.amount) / 100.0)
+        return self.amount > 0 ? String(format: "%.02d", Double(self.amount) / 100.0) : ""
     }
 }
 
