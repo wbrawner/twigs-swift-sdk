@@ -47,6 +47,19 @@ public struct RecurringTransaction: Identifiable, Hashable, Codable {
     }
 }
 
+extension Date {
+    var startOfMonth: Date {
+        get {
+            return Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: Calendar.current.startOfDay(for: self)))!
+        }
+    }
+    var endOfMonth: Date {
+        get {
+            return Calendar.current.date(byAdding: DateComponents(month: 1, day: -1), to: self.startOfMonth)!
+        }
+    }
+}
+
 extension RecurringTransaction {
     public var type: TransactionType {
         if (self.expense) {
@@ -58,6 +71,29 @@ extension RecurringTransaction {
     
     public var amountString: String {
         return self.amount > 0 ? String(format: "%.02f", Double(self.amount) / 100.0) : ""
+    }
+    
+    public var isThisMonth: Bool {
+        switch self.frequency.unit {
+        case .daily:
+            return true // TODO: this isn't quite accurate, there are edge cases to account for
+        case .weekly(_):
+            return true // TODO: also not quite accurate. e.g. a transaction that occurs every 6 weeks may or may not be this month
+        case .monthly(_):
+            // TODO: the backend needs to expose the last run time in order to be able to check this
+            return self.frequency.count == 1
+        case .yearly(let dayOfYear):
+            // TODO: the backend needs to expose the last run time in order to be able to check this
+            let currentMonth = Calendar.current.dateComponents([.month], from: Date()).month!
+            return dayOfYear.month == currentMonth
+        }
+    }
+    
+    public var isExpired: Bool {
+        guard let finish = self.finish else {
+            return false
+        }
+        return finish < Date().startOfMonth
     }
 }
 
