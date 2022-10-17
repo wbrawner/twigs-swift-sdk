@@ -56,7 +56,7 @@ extension Transaction {
     }
     
     public var amountString: String {
-        return self.amount > 0 ? String(format: "%.02d", Double(self.amount) / 100.0) : ""
+        return self.amount > 0 ? String(format: "%.02f", Double(self.amount) / 100.0) : ""
     }
 }
 
