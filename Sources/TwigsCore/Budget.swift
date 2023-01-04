@@ -17,6 +17,14 @@ public struct Budget: Identifiable, Hashable, Codable {
 public struct BudgetOverview: Equatable {
     public let budget: Budget
     public let balance: Int
+    public var maxValue: Float {
+        get {
+            return Float(max(
+                max(expectedIncome, actualIncome),
+                max(expectedExpenses, actualExpenses)
+            ))
+        }
+    }
     public var expectedIncome: Int
     public var actualIncome: Int
     public var expectedExpenses: Int
