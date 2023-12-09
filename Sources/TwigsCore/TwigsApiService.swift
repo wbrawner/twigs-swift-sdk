@@ -272,7 +272,7 @@ public class RequestHelper {
         var combinedEndPoint = endPoint
         if (queries != nil) {
             for (key, values) in queries! {
-                for value in values {
+                    for value in values {
                     let separator = combinedEndPoint.contains("?") ? "&" : "?"
                     combinedEndPoint += separator + key + "=" + value
                 }
@@ -392,6 +392,9 @@ public class RequestHelper {
             return try self.decoder.decode(ResultType.self, from: data)
         } catch {
             print("error decoding json: \(error)")
+            if let data = data {
+                print(String(decoding: data, as: UTF8.self))
+            }
             throw NetworkError.jsonParsingFailed(error)
         }
     }
@@ -468,7 +471,7 @@ extension Date {
         dateFormatter.timeZone = TimeZone(identifier: "UTC")
         return dateFormatter
     }()
-    
+
     func toISO8601String() -> String {
         return Date.iso8601DateFormatter.string(from: self)
     }
